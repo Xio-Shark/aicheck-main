@@ -1,0 +1,10 @@
+[package]
+name = "aidoc-probes"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+aidoc-core = { path = "../aidoc-core" }
+aidoc-sandbox = { path = "../aidoc-sandbox" }
+libc.workspace = true

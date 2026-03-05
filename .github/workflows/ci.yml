@@ -20,33 +20,31 @@ jobs:
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: aicheck-main
 
       - name: Format Check
-        run: cd aicheck-main && cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
 
       - name: Clippy Check
-        run: cd aicheck-main && cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Unit Tests
-        run: cd aicheck-main && cargo test --all --locked
+        run: cargo test --all --locked
 
       - name: Security Audit
         run: |
           cargo install cargo-audit
-          cd aicheck-main && cargo audit || true
+          cargo audit || true
 
       - name: Code Coverage
         run: |
           cargo install cargo-tarpaulin
-          cd aicheck-main && cargo tarpaulin --out Xml --output-dir coverage --skip-clean
+          cargo tarpaulin --out Xml --output-dir coverage --skip-clean
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
         with:
-          files: aicheck-main/coverage/cobertura.xml
+          files: coverage/cobertura.xml
           fail_ci_if_error: false
 
       - name: Compose Config Check
-        run: cd aicheck-main && docker compose config
+        run: docker compose config

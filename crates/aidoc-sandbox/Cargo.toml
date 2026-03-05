@@ -1,0 +1,9 @@
+[package]
+name = "aidoc-sandbox"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+wait-timeout.workspace = true
