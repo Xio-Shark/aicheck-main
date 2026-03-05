@@ -1,85 +1,85 @@
 # aidoc
 
+[![CI](https://github.com/Xio-Shark/aicheck-main/actions/workflows/ci.yml/badge.svg)](https://github.com/Xio-Shark/aicheck-main/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Xio-Shark/aicheck-main)](https://github.com/Xio-Shark/aicheck-main/releases)
+
 只读诊断工具（Rust Workspace），用于把构建/安装类报错整理为可交接的结构化报告。
 
-## 快速开始
+## 特性
 
-### 1) 安装 Rust
+- ✅ 只读安全：不修改系统配置、注册表、环境变量
+- ✅ 多平台支持：Windows / Linux / macOS (x64 & ARM64)
+- ✅ 结构化输出：Markdown / JSON 格式
+- ✅ 智能脱敏：自动隐藏敏感信息
+- ✅ 签名匹配：识别常见错误模式
+- ✅ Docker 支持：一键容器化运行
+- ✅ LLM 集成：可选 AI 摘要功能
+
+## 快速安装
+
+### 从 GitHub Release 下载
+
+```bash
+# Linux
+wget https://github.com/Xio-Shark/aicheck-main/releases/latest/download/aidoc-v1.0.0-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf aidoc-v1.0.0-x86_64-unknown-linux-gnu.tar.gz
+./aidoc --help
+
+# macOS
+curl -LO https://github.com/Xio-Shark/aicheck-main/releases/latest/download/aidoc-v1.0.0-x86_64-apple-darwin.tar.gz
+tar -xzf aidoc-v1.0.0-x86_64-apple-darwin.tar.gz
+./aidoc --help
+
+# Windows
+# 下载 aidoc-v1.0.0-x86_64-pc-windows-msvc.zip 并解压
+```
+
+### 从源码构建
+
+#### 1) 安装 Rust
 
 Windows：
-
 ```powershell
 .\install-rust.ps1
 ```
 
 Linux/macOS：
-
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source ~/.cargo/env
 ```
 
-### 2) 本地运行
-
-Windows：
-
-```powershell
-.\quick-start.ps1
-```
-
-Linux/macOS：
+#### 2) 构建项目
 
 ```bash
-bash quick-start.sh
+cargo build --release -p aidoc-cli
+./target/release/aidoc --help
 ```
 
-### 3) 运行测试
+## 使用示例
+
+### 基础诊断
 
 ```bash
-cargo test --all --locked
-```
-
-## Docker 复现
-
-Windows：
-
-```powershell
-.\up.ps1
-```
-
-Linux/macOS：
-
-```bash
-bash up.sh
-```
-
-手动命令：
-
-```bash
-docker compose up -d --build
-docker compose ps
-docker compose exec -T aidoc aidoc explain
-docker compose down --remove-orphans
-```
-
-## 常用命令
-
-```bash
-# 只读边界说明
-cargo run -p aidoc-cli -- explain
-
 # 诊断当前环境
-cargo run -p aidoc-cli -- diagnose --format md
+aidoc diagnose --format md
 
-# 对原始错误做签名匹配与脱敏
-printf "bash: pip: command not found\n" | cargo run -p aidoc-cli -- paste --format md
+# 只读边界说明
+aidoc explain
 
-# 合并日志与快照
-{
-  printf "bash: pip: command not found\n"
-  printf "\n---AIDOC-SECTION-BREAK---\n"
-  printf '{"os":"linux","arch":"x86_64","shell":"bash","elevated":false,"path_preview":[],"toolchains":[],"proxy":{"http_proxy":null,"https_proxy":null,"no_proxy":null},"network":[]}\n'
-} | cargo run -p aidoc-cli -- pack --format md
+# 错误签名匹配
+echo "bash: pip: command not found" | aidoc paste --format json
+```
+
+### Docker 运行
+
+```bash
+# 快速启动
+docker compose up -d
+docker compose exec aidoc aidoc diagnose
+
+# 清理
+docker compose down
 ```
 
 ## 项目结构
@@ -96,29 +96,41 @@ crates/
   aidoc-llm        # 可选 LLM 摘要
 ```
 
-## 只读与安全约束
+## 开发
 
-- 不写系统配置、不改注册表、不改环境变量。
-- 外部命令通过白名单执行器并带超时。
-- 敏感信息先脱敏再进入后续流程。
-- 密钥仅从环境变量读取（如 `AIDOC_API_KEY`）。
-
-## LLM（可选）
+### 运行测试
 
 ```bash
-cargo run -p aidoc-cli --features llm -- diagnose --llm on --llm-provider ollama --llm-dry-run
+cargo test --all --locked
 ```
 
-- 优先级：CLI 参数 > 环境变量 > 配置文件
-- 远程 provider 需要 `AIDOC_API_KEY`
+### 代码覆盖率
 
-## 文档
+```bash
+cargo install cargo-tarpaulin
+cargo tarpaulin --out Html
+```
 
-- [START_HERE_ZH.md](START_HERE_ZH.md)
-- [USAGE_GUIDE.md](USAGE_GUIDE.md)
-- [INSTALL_RUST_ZH.md](INSTALL_RUST_ZH.md)
-- [RELEASE.md](RELEASE.md)
-- [CHANGELOG.md](CHANGELOG.md)
+### 性能基准测试
+
+```bash
+cargo bench
+```
+
+### 安全审计
+
+```bash
+cargo install cargo-audit
+cargo audit
+```
+
+## LLM 功能（可选）
+
+```bash
+cargo run -p aidoc-cli --features llm -- diagnose --llm on --llm-provider ollama
+```
+
+需要设置 `AIDOC_API_KEY` 环境变量。
 
 ## 退出码
 
@@ -126,4 +138,15 @@ cargo run -p aidoc-cli --features llm -- diagnose --llm on --llm-provider ollama
 - `1`：诊断完成且发现问题
 - `2`：工具自身错误
 - `3`：权限不足
-- `4`：LLM 调用失败或未启用 LLM 构建
+- `4`：LLM 调用失败
+
+## 文档
+
+- [使用指南](USAGE_GUIDE.md)
+- [安装说明](INSTALL_RUST_ZH.md)
+- [发布流程](RELEASE.md)
+- [更新日志](CHANGELOG.md)
+
+## 许可证
+
+MIT License
