@@ -1,0 +1,19 @@
+{
+  "name": "@aidoc/cli",
+  "version": "1.0.0",
+  "description": "Read-only elevated diagnostic summarizer",
+  "license": "MIT",
+  "bin": {
+    "aidoc": "bin/aidoc.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "bin/aidoc.js",
+    "install.js"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

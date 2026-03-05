@@ -1,0 +1,25 @@
+[package]
+name = "aidoc-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "aidoc"
+path = "src/main.rs"
+
+[features]
+default = []
+llm = ["dep:aidoc-llm", "dep:futures"]
+
+[dependencies]
+aidoc-core = { path = "../aidoc-core" }
+aidoc-redact = { path = "../aidoc-redact" }
+aidoc-signatures = { path = "../aidoc-signatures" }
+aidoc-output = { path = "../aidoc-output" }
+aidoc-probes = { path = "../aidoc-probes" }
+aidoc-llm = { path = "../aidoc-llm", optional = true }
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+futures = { workspace = true, optional = true }

@@ -1,0 +1,21 @@
+services:
+  aidoc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aidoc-cli:1.0.0
+    container_name: aidoc-cli
+    env_file:
+      - path: .env.example
+        required: true
+      - path: .env
+        required: false
+    entrypoint: ["/bin/sh", "-lc"]
+    command: ["sleep infinity"]
+    healthcheck:
+      test: ["CMD-SHELL", "aidoc explain >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
