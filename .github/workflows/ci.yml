@@ -20,15 +20,17 @@ jobs:
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: aicheck-main
 
       - name: Format Check
-        run: cargo fmt --all -- --check
+        run: cd aicheck-main && cargo fmt --all -- --check
 
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cd aicheck-main && cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Unit Tests
-        run: cargo test --all --locked
+        run: cd aicheck-main && cargo test --all --locked
 
       - name: Compose Config Check
-        run: docker compose config
+        run: cd aicheck-main && docker compose config
