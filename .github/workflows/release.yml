@@ -45,7 +45,7 @@ jobs:
       - name: Verify version matches Cargo.toml
         shell: bash
         run: |
-          CARGO_VERSION=$(grep '^version = ' aicheck-main/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          CARGO_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
           TAG_VERSION="${{ steps.version.outputs.version }}"
           if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
             echo "Version mismatch: Cargo.toml has $CARGO_VERSION but tag is v$TAG_VERSION"
@@ -62,12 +62,12 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
-          workspaces: aicheck-main
+          workspaces: .
 
       - name: Build binary
         shell: bash
         run: |
-          cd aicheck-main
+          cd .
           START_TIME=$(date +%s)
           cargo build --release --target ${{ matrix.target }} -p aidoc-cli
           END_TIME=$(date +%s)
@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: |
           ARCHIVE_NAME="aidoc-${{ steps.version.outputs.tag }}-${{ matrix.target }}.${{ matrix.ext }}"
-          cd aicheck-main/target/${{ matrix.target }}/release
+          cd target/${{ matrix.target }}/release
           tar -czf "../../../../$ARCHIVE_NAME" ${{ matrix.binary }}
           cd ../../../..
           echo "Created $ARCHIVE_NAME"
@@ -90,7 +90,7 @@ jobs:
         shell: pwsh
         run: |
           $archiveName = "aidoc-${{ steps.version.outputs.tag }}-${{ matrix.target }}.${{ matrix.ext }}"
-          Compress-Archive -Path "aicheck-main/target/${{ matrix.target }}/release/${{ matrix.binary }}" -DestinationPath $archiveName
+          Compress-Archive -Path "target/${{ matrix.target }}/release/${{ matrix.binary }}" -DestinationPath $archiveName
           Write-Host "Created $archiveName"
           Get-Item $archiveName | Select-Object Name, Length
 
@@ -163,13 +163,13 @@ jobs:
 
       - name: Update package.json version
         run: |
-          cd aicheck-main/npm
+          cd ./npm
           npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
           cat package.json
 
       - name: Publish to npm
         run: |
-          cd aicheck-main/npm
+          cd ./npm
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
