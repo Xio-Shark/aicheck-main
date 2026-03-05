@@ -1,0 +1,171 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            ext: tar.gz
+            binary: aidoc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            ext: tar.gz
+            binary: aidoc
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            ext: tar.gz
+            binary: aidoc
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            ext: zip
+            binary: aidoc.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Verify version matches Cargo.toml
+        shell: bash
+        run: |
+          CARGO_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+            echo "Version mismatch: Cargo.toml has $CARGO_VERSION but tag is v$TAG_VERSION"
+            exit 1
+          fi
+          echo "Version verified: $CARGO_VERSION"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build binary
+        shell: bash
+        run: |
+          START_TIME=$(date +%s)
+          cargo build --release --target ${{ matrix.target }} -p aidoc-cli
+          END_TIME=$(date +%s)
+          BUILD_TIME=$((END_TIME - START_TIME))
+          echo "Build time for ${{ matrix.target }}: ${BUILD_TIME}s"
+
+      - name: Package binary (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          ARCHIVE_NAME="aidoc-${{ steps.version.outputs.tag }}-${{ matrix.target }}.${{ matrix.ext }}"
+          cd target/${{ matrix.target }}/release
+          tar -czf "../../../$ARCHIVE_NAME" ${{ matrix.binary }}
+          cd ../../..
+          echo "Created $ARCHIVE_NAME"
+          ls -lh "$ARCHIVE_NAME"
+
+      - name: Package binary (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $archiveName = "aidoc-${{ steps.version.outputs.tag }}-${{ matrix.target }}.${{ matrix.ext }}"
+          Compress-Archive -Path "target/${{ matrix.target }}/release/${{ matrix.binary }}" -DestinationPath $archiveName
+          Write-Host "Created $archiveName"
+          Get-Item $archiveName | Select-Object Name, Length
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aidoc-${{ matrix.target }}
+          path: aidoc-${{ steps.version.outputs.tag }}-${{ matrix.target }}.${{ matrix.ext }}
+          if-no-files-found: error
+
+  create-release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display downloaded artifacts
+        run: |
+          ls -R artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.version.outputs.tag }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/aidoc-x86_64-unknown-linux-gnu/aidoc-${{ steps.version.outputs.tag }}-x86_64-unknown-linux-gnu.tar.gz
+            artifacts/aidoc-x86_64-apple-darwin/aidoc-${{ steps.version.outputs.tag }}-x86_64-apple-darwin.tar.gz
+            artifacts/aidoc-aarch64-apple-darwin/aidoc-${{ steps.version.outputs.tag }}-aarch64-apple-darwin.tar.gz
+            artifacts/aidoc-x86_64-pc-windows-msvc/aidoc-${{ steps.version.outputs.tag }}-x86_64-pc-windows-msvc.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-npm:
+    name: Publish to npm
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Update package.json version
+        run: |
+          cd npm
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+          cat package.json
+
+      - name: Publish to npm
+        run: |
+          cd npm
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,0 +1,10 @@
+[package]
+name = "aidoc-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+chrono.workspace = true
+regex.workspace = true
