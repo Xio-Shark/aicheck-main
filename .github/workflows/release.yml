@@ -80,8 +80,8 @@ jobs:
         run: |
           ARCHIVE_NAME="aidoc-${{ steps.version.outputs.tag }}-${{ matrix.target }}.${{ matrix.ext }}"
           cd target/${{ matrix.target }}/release
-          tar -czf "../../../../$ARCHIVE_NAME" ${{ matrix.binary }}
-          cd ../../../..
+          tar -czf "../../../$ARCHIVE_NAME" ${{ matrix.binary }}
+          cd ../../..
           echo "Created $ARCHIVE_NAME"
           ls -lh "$ARCHIVE_NAME"
 
