@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aidoc-core",
  "aidoc-llm",
@@ -29,7 +29,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-core"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "regex",
@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-llm"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aidoc-core",
  "anyhow",
@@ -51,7 +51,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-output"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aidoc-core",
  "serde_json",
@@ -59,7 +59,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-probes"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aidoc-core",
  "aidoc-sandbox",
@@ -68,7 +68,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-redact"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aidoc-core",
  "once_cell",
@@ -77,7 +77,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-sandbox"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "thiserror",
  "wait-timeout",
@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "aidoc-signatures"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aidoc-core",
 ]
